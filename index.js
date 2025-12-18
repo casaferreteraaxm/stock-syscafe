@@ -3,9 +3,14 @@ const fs = require("fs");
 const path = require("path");
 
 const app = express();
-app.use(express.json({ limit: "200mb" }));
+app.use(express.json({ limit: "300mb" }));
 
 const DATA_DIR = path.join(__dirname, "data");
+
+// Crear carpeta una sola vez
+if (!fs.existsSync(DATA_DIR)) {
+  fs.mkdirSync(DATA_DIR);
+}
 
 /* ===========================
    RECEPCIÓN DE STOCK
@@ -16,20 +21,33 @@ app.put("/SendStock", (req, res) => {
 
   console.log(`📦 Stock recibido: ${items}`);
 
-  res.status(200).json({ ok: true, received: items });
+  // ✅ RESPONDER INMEDIATAMENTE
+  res.status(200).json({
+    ok: true,
+    received: items,
+  });
 
-  setImmediate(() => {
-    if (!fs.existsSync(DATA_DIR)) {
-      fs.mkdirSync(DATA_DIR);
+  // ✅ PROCESO EN BACKGROUND REAL
+  process.nextTick(() => {
+    try {
+      const file = `stock-${Date.now()}.json`;
+      const filePath = path.join(DATA_DIR, file);
+
+      const stream = fs.createWriteStream(filePath);
+      stream.write(JSON.stringify(data));
+      stream.end();
+
+      stream.on("finish", () => {
+        console.log(`💾 Guardado correctamente: ${file}`);
+      });
+
+      stream.on("error", (err) => {
+        console.error("❌ Error al guardar archivo:", err);
+      });
+
+    } catch (err) {
+      console.error("❌ Error general:", err);
     }
-
-    const file = `stock-${Date.now()}.json`;
-    fs.writeFileSync(
-      path.join(DATA_DIR, file),
-      JSON.stringify(data)
-    );
-
-    console.log(`💾 Guardado ${file}`);
   });
 });
 
@@ -37,10 +55,12 @@ app.put("/SendStock", (req, res) => {
    LISTAR ARCHIVOS
 =========================== */
 app.get("/files", (req, res) => {
-  if (!fs.existsSync(DATA_DIR)) return res.json([]);
-
-  const files = fs.readdirSync(DATA_DIR);
-  res.json(files);
+  try {
+    const files = fs.readdirSync(DATA_DIR);
+    res.json(files);
+  } catch {
+    res.json([]);
+  }
 });
 
 /* ===========================
