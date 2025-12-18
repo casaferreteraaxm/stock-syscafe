@@ -25,11 +25,11 @@ app.get("/", (req, res) => {
 /**
  * RECEPCIÓN DE STOCK DESDE SYSSCAFE
  */
-app.put("/erp/stock", (req, res) => {
+app.put("/SendStock", (req, res) => {
   const data = req.body;
   const items = Array.isArray(data) ? data.length : 1;
 
-  console.log("Stock recibido:", items);
+  console.log("📦 Stock recibido desde /SendStock:", items);
 
   /**
    * RESPUESTA INMEDIATA
