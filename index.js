@@ -2,6 +2,9 @@
 const express = require("express");
 const app = express();
 
+console.log("✅ Iniciando app...");
+console.log("🔧 PORT desde entorno:", process.env.PORT);
+
 app.use(express.json({ limit: "100mb" }));
 
 app.put("/erp/stock", (req, res) => {
@@ -19,6 +22,8 @@ app.get("/", (req, res) => {
 
 // Usa PORT de Railway o 3000 en desarrollo
 const PORT = process.env.PORT || 3000;
+
+console.log("📡 Intentando escuchar en puerto:", PORT);
 
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`🚀 Listening on port ${PORT}`);
