@@ -3,51 +3,41 @@ const fs = require("fs");
 const path = require("path");
 
 const app = express();
-app.use(express.json({ limit: "300mb" }));
 
 const DATA_DIR = path.join(__dirname, "data");
-
-// Crear carpeta una sola vez
-if (!fs.existsSync(DATA_DIR)) {
-  fs.mkdirSync(DATA_DIR);
-}
+if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR);
 
 /* ===========================
-   RECEPCIÓN DE STOCK
+   RECEPCIÓN DE STOCK (STREAM)
 =========================== */
 app.put("/SendStock", (req, res) => {
-  const data = req.body;
-  const items = Array.isArray(data) ? data.length : 1;
+  console.log("📥 Conexión entrante de Syscafe");
 
-  console.log(`📦 Stock recibido: ${items}`);
+  const fileName = `stock-${Date.now()}.json`;
+  const filePath = path.join(DATA_DIR, fileName);
 
-  // ✅ RESPONDER INMEDIATAMENTE
-  res.status(200).json({
-    ok: true,
-    received: items,
+  const writeStream = fs.createWriteStream(filePath);
+  let bytes = 0;
+
+  req.on("data", chunk => {
+    bytes += chunk.length;
+    writeStream.write(chunk);
   });
 
-  // ✅ PROCESO EN BACKGROUND REAL
-  process.nextTick(() => {
-    try {
-      const file = `stock-${Date.now()}.json`;
-      const filePath = path.join(DATA_DIR, file);
+  req.on("end", () => {
+    writeStream.end();
+    console.log(`✅ Stock recibido y guardado: ${fileName}`);
+    console.log(`📦 Tamaño recibido: ${(bytes / 1024 / 1024).toFixed(2)} MB`);
+  });
 
-      const stream = fs.createWriteStream(filePath);
-      stream.write(JSON.stringify(data));
-      stream.end();
+  req.on("error", err => {
+    console.error("❌ Error recibiendo stream:", err);
+  });
 
-      stream.on("finish", () => {
-        console.log(`💾 Guardado correctamente: ${file}`);
-      });
-
-      stream.on("error", (err) => {
-        console.error("❌ Error al guardar archivo:", err);
-      });
-
-    } catch (err) {
-      console.error("❌ Error general:", err);
-    }
+  // 🚀 RESPONDER DE INMEDIATO
+  res.status(200).json({
+    ok: true,
+    message: "Stock recibido",
   });
 });
 
@@ -55,12 +45,8 @@ app.put("/SendStock", (req, res) => {
    LISTAR ARCHIVOS
 =========================== */
 app.get("/files", (req, res) => {
-  try {
-    const files = fs.readdirSync(DATA_DIR);
-    res.json(files);
-  } catch {
-    res.json([]);
-  }
+  const files = fs.readdirSync(DATA_DIR);
+  res.json(files);
 });
 
 /* ===========================
@@ -68,15 +54,11 @@ app.get("/files", (req, res) => {
 =========================== */
 app.get("/files/:name", (req, res) => {
   const filePath = path.join(DATA_DIR, req.params.name);
-
-  if (!fs.existsSync(filePath)) {
-    return res.status(404).send("Archivo no encontrado");
-  }
-
+  if (!fs.existsSync(filePath)) return res.sendStatus(404);
   res.download(filePath);
 });
 
-app.get("/", (req, res) => {
+app.get("/", (_, res) => {
   res.send("Stock Receiver OK");
 });
 
