@@ -21,7 +21,7 @@ app.get("/", (req, res) => {
 // 🔴 CLAVE PARA RAILWAY
 const PORT = process.env.PORT;
 if (!PORT) {
-  console.error("❌ PORT not defined");
+  console.error("PORT not defined");
   process.exit(1);
 }
 
