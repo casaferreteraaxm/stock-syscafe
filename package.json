@@ -1,16 +1,15 @@
 {
-  "name": "stock-receiver-railway",
+  "name": "stock-syscafe",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "private": true,
+  "type": "commonjs",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node index.js"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
   "dependencies": {
-    "express": "^5.2.1"
+    "express": "^4.19.2"
+  },
+  "engines": {
+    "node": ">=18"
   }
 }
