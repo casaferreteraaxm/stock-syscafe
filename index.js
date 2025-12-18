@@ -2,44 +2,27 @@ const express = require("express");
 
 const app = express();
 
-/**
- * IMPORTANTE:
- * Aumentamos el límite del body
- */
+// Aumentar límite del body
 app.use(express.json({ limit: "50mb" }));
 
-/**
- * Endpoint exclusivo para Syscafe
- */
 app.put("/erp/stock", (req, res) => {
-  try {
-    const items = Array.isArray(req.body) ? req.body.length : 1;
+  const items = Array.isArray(req.body) ? req.body.length : 1;
+  console.log("📦 Stock recibido:", items);
 
-    console.log("Stock recibido:", items);
-
-    /**
-     * RESPONDER RÁPIDO
-     * Syscafe NO debe esperar procesamiento
-     */
-    res.status(200).json({
-      ok: true,
-      received: items,
-      timestamp: new Date().toISOString(),
-    });
-  } catch (err) {
-    console.error("Error:", err.message);
-    res.status(500).json({ ok: false });
-  }
+  res.status(200).json({
+    ok: true,
+    received: items,
+    timestamp: new Date().toISOString(),
+  });
 });
 
-/**
- * Health check
- */
 app.get("/", (req, res) => {
   res.send("Stock Receiver OK");
 });
 
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`Stock receiver on port ${PORT}`);
+// 🔴 CAMBIO CLAVE AQUÍ
+const PORT = process.env.PORT;
+
+app.listen(PORT, "0.0.0.0", () => {
+  console.log(`🚀 Listening on port ${PORT}`);
 });
